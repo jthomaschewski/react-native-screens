@@ -44,7 +44,7 @@
   UIViewController *presentationSourceViewController =
       [RNSPresentationSourceProvider findViewControllerForPresentationInWindow:window];
   if (presentationSourceViewController == nil) {
-    RNSLogE(@"[RNScreens] Failed to present form sheet: The source view controller cannot be found for target window.");
+    RNSLogE(@"[RNScreens] Failed to present sheet: The source view controller cannot be found for target window.");
     return;
   }
 

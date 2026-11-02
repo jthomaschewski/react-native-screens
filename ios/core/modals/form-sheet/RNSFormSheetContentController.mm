@@ -7,6 +7,7 @@
 #import "RNSPresentationSourceProvider.h"
 
 #import "RNSAssert.h"
+#import "RNSLog.h"
 
 @interface RNSFormSheetContentController () <UIAdaptivePresentationControllerDelegate,
                                              UIGestureRecognizerDelegate
@@ -27,12 +28,49 @@
 - (instancetype)init
 {
   if (self = [super init]) {
-    self.modalPresentationStyle = UIModalPresentationFormSheet;
-
     _updateCoordinator = [RNSFormSheetUpdateCoordinator new];
     _presentationManager = [RNSFormSheetPresentationManager new];
+
+    _presentationStyle = RNSFormSheetPresentationStyleFormSheet;
+    [self applyPresentationStyle];
   }
   return self;
+}
+
+#pragma mark - Presentation style
+
+- (void)setPresentationStyle:(RNSFormSheetPresentationStyle)presentationStyle
+{
+  if (_presentationStyle == presentationStyle) {
+    return;
+  }
+  _presentationStyle = presentationStyle;
+
+  if (_presentationManager.state == RNSFormSheetPresentationStateDismissed) {
+    [self applyPresentationStyle];
+  } else {
+    // `prepareForPresentation` applies the stored value right before the next presentation.
+    RNSLogW(
+        @"[RNScreens] The sheet presentation style cannot change while the sheet is presented. The new value takes effect on the next presentation.");
+  }
+}
+
+- (void)applyPresentationStyle
+{
+#if TARGET_OS_TV
+  // tvOS has no sheets; mirror the legacy fallback for both styles.
+  self.modalPresentationStyle = UIModalPresentationFullScreen;
+#else
+  switch (_presentationStyle) {
+    case RNSFormSheetPresentationStylePageSheet:
+      self.modalPresentationStyle = UIModalPresentationPageSheet;
+      break;
+    case RNSFormSheetPresentationStyleFormSheet:
+    default:
+      self.modalPresentationStyle = UIModalPresentationFormSheet;
+      break;
+  }
+#endif // TARGET_OS_TV
 }
 
 - (RNSFormSheetContentView *)contentView
@@ -123,6 +161,10 @@
 
 - (void)prepareForPresentation
 {
+  // UIKit creates the presentation controller lazily from the current `modalPresentationStyle`, so the style must be
+  // final before `presentationController` is first accessed below.
+  [self applyPresentationStyle];
+
   // The presentation controller is recreated by UIKit on every present/dismiss cycle.
   // We must assign this delegate before actual presentation
   self.presentationController.delegate = self;

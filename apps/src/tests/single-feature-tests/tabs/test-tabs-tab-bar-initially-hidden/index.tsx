@@ -63,4 +63,7 @@ function TestTabsTabBarInitiallyHidden() {
   );
 }
 
-export default createScenario(TestTabsTabBarInitiallyHidden, scenarioDescription);
+export default createScenario(
+  TestTabsTabBarInitiallyHidden,
+  scenarioDescription,
+);
