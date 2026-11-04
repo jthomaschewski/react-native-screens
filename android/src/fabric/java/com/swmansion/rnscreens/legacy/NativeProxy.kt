@@ -63,18 +63,14 @@ class NativeProxy {
 
         val screen = weakScreeRef.get()
         if (screen is Screen) {
-            // Fabric's mounting transaction removes the screen on a Choreographer frame callback,
-            // which can execute before `startRemovalTransition` (scheduled via `Handler.post`).
-            // To prevent `Screen.isBeingRemoved` from being read as false during teardown,
-            // we must set this flag synchronously here.
+            // Only flag the screen. The transaction is pulled before the UI thread has mounted
+            // earlier, still queued ones. Starting the removal transition from here (e.g. via
+            // `Handler.post`) can mark views that those batches still move: they keep their
+            // transitioning parent and `addViewAt` throws "The specified child already has a parent".
+            // The transition starts inside the batch that removes the screen, see
+            // `RNSScreenRemovalListener::pullTransaction`. The flag is set synchronously, so that
+            // `Screen.isBeingRemoved` is already true when that batch tears down the subtree.
             screen.markAsBeingRemoved()
-            val isScheduled =
-                screen.post {
-                    screen.startRemovalTransition()
-                }
-            if (!isScheduled) {
-                Log.w("[RNScreens]", "Failed to schedule removal transition start for screen with tag $screenTag")
-            }
         } else {
             Log.w("[RNScreens]", "Reference stored in NativeProxy for tag $screenTag no longer points to valid object.")
         }

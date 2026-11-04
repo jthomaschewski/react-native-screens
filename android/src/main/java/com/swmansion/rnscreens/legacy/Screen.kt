@@ -455,7 +455,8 @@ class Screen(
 
     /**
      * Marks this screen as being removed from the native stack. Safe to call off the UI thread;
-     * must run before the mount transaction removing this screen executes.
+     * must run before the mount transaction removing this screen executes. Does not start the
+     * removal transition, the mount transaction does that on the UI thread.
      */
     fun markAsBeingRemoved() {
         isBeingRemoved = true

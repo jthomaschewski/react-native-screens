@@ -64,6 +64,12 @@ open class ScreenViewManager :
         parent: Screen,
         index: Int,
     ) {
+        // Fallback for when another mounting override delegate (e.g. Reanimated's layout animations)
+        // re-sorts the screen removals that `RNSScreenRemovalListener` moves to the front of the
+        // transaction: start the removal transition on the first child removal of a flagged screen.
+        if (parent.isBeingRemoved) {
+            parent.startRemovalTransition()
+        }
         if (parent.getChildAt(index) is ScreenFooter) {
             parent.footer = null
         }
